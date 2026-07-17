@@ -1,0 +1,12 @@
+# Python temporäre Dateien
+__pycache__/
+*.pyc
+
+# C kompilierte Dateien
+*.exe
+*.o
+*.out
+
+.venv/
+venv/
+ENV
