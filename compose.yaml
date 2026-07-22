@@ -27,7 +27,9 @@ services:
   c-service:
     environment:
       - TZ=Europe/Vienna
-    build: ./c-service
+    build: 
+      context: .                  
+      dockerfile: c-service/Dockerfile 
     volumes:
       - ./data:/app/data
     networks:
@@ -35,8 +37,9 @@ services:
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 100s
-      timeout: 3s
+      timeout: 30s
       retries: 5
+      start_period: 60s
 
 networks:
   app-network:

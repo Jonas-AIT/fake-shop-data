@@ -24,17 +24,17 @@ app = Flask(__name__)
 @app.route("/test/<number_of_sites>")
 def run_watchlist(number_of_sites):
     try:
-        resp = requests.post(f"{C_SERVICE_URL}/test/{number_of_sites}", timeout = 5)
+        resp = requests.post(f"{C_SERVICE_URL}/test/{number_of_sites}", timeout = 40)
         if resp.status_code == 409:
             print("[Hinweis] Es laeuft bereits eine Pruefung, neuer Trigger wurde abgelehnt", flush = True)
     except requests.exceptions.RequestException as e:
         print(f"[Fehler] C-Service nicht erreichbar: {e}", flush = True)
-    return jsonify({"status": "finished"})    
+    return render_template('test.html')    
 
 def trigger_watchlist_check(number_of_sites):
     """Startet die Watchlist-Prüfung, nur für die Automatik"""
     try:
-        requests.post(f"{C_SERVICE_URL}/test/{number_of_sites}", timeout = 5)
+        requests.post(f"{C_SERVICE_URL}/test/{number_of_sites}", timeout = 40)
     except requests.exceptions.RequestException as e:
         print(f"[Scheduler-Fehler] C-Service nicht erreichbar: {e}", flush=True)
 

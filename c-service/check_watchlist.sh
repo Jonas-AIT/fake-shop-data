@@ -17,7 +17,7 @@ ulimit -c 0
 BASE_URL="https://www.watchlist-internet.at/liste-betruegerischer-shops/"
 ANZAHL="${1:-20}"
 PROGRAMM="./statusabfrage"
-PROGRAMM_TIMEOUT=10   # Sekunden, nach denen ein haengender/abstuerzender Aufruf abgebrochen wird
+PROGRAMM_TIMEOUT=45   # Sekunden, nach denen ein haengender/abstuerzender Aufruf abgebrochen wird
 PAUSE_SEKUNDEN=0.1      # Hoeflichkeitspause zwischen Seitenabrufen
 
 if [ ! -x "$PROGRAMM" ]; then

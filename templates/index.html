@@ -18,7 +18,7 @@
                 <div class="header-row">
                     <h2>API für Statusabfragen von Fake Shops</h2>
                     <nav class="nav-links">
-                        <a href="{{ url_for('download_results') }}" class="nav-button">download csv</a>
+                        <a href="{{ url_for('download_results') }}" class="nav-button">download data</a>
                         <a href="{{ url_for('show_results') }}" class="nav-button">results</a>
                     </nav>
                 </div>
@@ -27,14 +27,12 @@
                 Das Programm dient dazu, die Fake Shops, die auf der Watchlist 
                 Internet gelistet sind auf ihren Status zu überprüfen.
                 Es führt alle Tests vollautomatisch in einer konfigurierten Frequenz durch. 
-                Die Statuscodes werden in Form einer csv Datei mit Zeitstemplen zurückgegebn.
-                Mit "download csv" können Sie diese Datei herunterladen.
+                Die werden in einer zentralen SQLite Datenbank gespeichert.
+                Die Datei kann sich mit dem Feld "download data" heruntergeladen werden
             </p>
 
             <p>
-                In dem Bereich "results" befindet sich die Tabelle mit allen 
-                Werten. Diese Seite kann dauerhaft aktualisiert werden, 
-                um die neuesten Werte zu erhalten.
+                Der Bereich "result" muss erst noch gebaut werden.
             </p>  
             <br>
 

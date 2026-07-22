@@ -7,10 +7,54 @@
 #include <string.h>
 #include <curl/curl.h> 
 #include <time.h>
+#include <sqlite3.h>
 
 #define MAX_PUFFER 255
 #define Ergebnisdatei "data/statusvalues.csv"
-#define MAX_CONNECTION_DURATION 3L
+#define MAX_CONNECTION_DURATION 8L
+
+// Callback-Funktion wird für jede Zeile aufgerufen, die von sqlite3_exec zurückgegeben wird
+static int callback(void *data, int argc, char **argv, char **azColName) {
+    for (int i = 0; i < argc; i++) {
+        printf("%s: %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
+    }
+    printf("\n");
+    return 0;
+}
+
+// Funktion zum Erstellen der SQLite Datenbank Tabelle fakeshops
+void tabelle_erstellen(sqlite3 *db, int rc, char *zErrMsg)
+{
+    const char *sql_create = "CREATE TABLE IF NOT EXISTS fakeshops(" \
+                            "ID INTEGER PRIMARY KEY AUTOINCREMENT," \
+                            "URL TEXT," \
+                            "status INTEGER," \
+                            "title TEXT," \
+                            "email1 TEXT," \
+                            "email2 TEXT," \
+                            "phonenumber TEXT," \
+                            "phonenumber_location TEXT," \
+                            "phonenumber_carrier TEXT," \
+                            "address TEXT," \
+                            "url_creation_date TEXT," \
+                            "url_expiration_date TEXT," \
+                            "url_last_update TEXT," \
+                            "servername TEXT," \
+                            "domain_status TEXT," \
+                            "registered_country TEXT," \
+                            "USt_IdNr TEXT," \
+                            "is_valid BOOLEAN," \
+                            "company_name TEXT," \
+                            "company_address TEXT," \
+                            "date TIMESTAMP DEFAULT (datetime('now', 'localtime')));";
+
+    // 2. Tabelle erstellen
+    rc = sqlite3_exec(db, sql_create, callback, 0, &zErrMsg);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "SQL-Fehler: %s ❌\n", zErrMsg);
+        sqlite3_free(zErrMsg);
+    }                        
+}
 
 // Funktion zum Konfigurieren des cURL Übertragungsvorgangs
 void uebertragung_konfigurieren(CURL *curl, char url[MAX_PUFFER])
@@ -53,143 +97,196 @@ char* zeit_berechnen()
     return ptr_timestring;
 }
 
-// Funktion stellt sicher, dass die Datei existiert und ggf. "sep=;" enthält
-void datei_initialisieren()
-{
-    FILE *fp = fopen(Ergebnisdatei, "r");
-    if (fp == NULL) 
-    {
-        // Datei existiert nicht -> Neu erstellen mit Kopfzeile
-        printf("Ergebnisdatei existiert nicht. Erstelle mit Header...\n");
-        FILE *new_fp = fopen(Ergebnisdatei, "w");
-        if (new_fp != NULL) 
-        {
-            fprintf(new_fp, "sep=;\n");
-            fclose(new_fp);
-        }
-    }
-    else 
-    {
-        fclose(fp);
-    }
-}
+// // Funktion stellt sicher, dass die Datei existiert und ggf. "sep=;" enthält
+// void datei_initialisieren()
+// {
+//     FILE *fp = fopen(Ergebnisdatei, "r");
+//     if (fp == NULL) 
+//     {
+//         // Datei existiert nicht -> Neu erstellen mit Kopfzeile
+//         printf("Ergebnisdatei existiert nicht. Erstelle mit Header...\n");
+//         FILE *new_fp = fopen(Ergebnisdatei, "w");
+//         if (new_fp != NULL) 
+//         {
+//             fprintf(new_fp, "sep=;\n");
+//             fclose(new_fp);
+//         }
+//     }
+//     else 
+//     {
+//         fclose(fp);
+//     }
+// }
 
 // Funktion zum Beschreiben der CSV Datei mit den Ergebnisen
-void datei_schreiben(char url[MAX_PUFFER], long response_code)
+void datei_schreiben(char url[MAX_PUFFER], long response_code, sqlite3 *db, int rc, char *zErrMsg)
 {
-    FILE *fp = fopen(Ergebnisdatei, "a");
-    if(fp == NULL) 
-    {
-        printf("Fehler beim Oeffnen der Ergebnis Datei");
-        return;
+    // FILE *fp = fopen(Ergebnisdatei, "a");
+    // if(fp == NULL) 
+    // {
+    //     printf("Fehler beim Oeffnen der Ergebnis Datei");
+    //     return;
+    // }
+
+    // char *zeit = zeit_berechnen();
+    // zeit[strcspn(zeit, "\n")] = '\0';
+
+    // fprintf(fp, "%s;%ld;%s\n", url, response_code, zeit);
+    // fclose(fp);
+
+    char sql_insert[512];
+    snprintf(sql_insert, sizeof(sql_insert), 
+         "INSERT INTO fakeshops (url, status) VALUES ('%s', %ld);", 
+         url, response_code);
+
+    rc = sqlite3_exec(db, sql_insert, callback, 0, &zErrMsg);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "SQL-Fehler beim Einfügen: %s\n", zErrMsg);
+        sqlite3_free(zErrMsg);
     }
+    sqlite3_close(db);
 
-    char *zeit = zeit_berechnen();
-    zeit[strcspn(zeit, "\n")] = '\0';
-
-    fprintf(fp, "%s;%ld;%s\n", url, response_code, zeit);
-    fclose(fp);
-}
-
-// Funktion zum Überprüfen von Duplikaten in der CSV Datei
-int csv_duplikatpruefung(char url[MAX_PUFFER], long *ptr_current_line)
-{
-    FILE *fp = fopen(Ergebnisdatei, "r");
-    if(fp == NULL) return 0;
-
-    char csv_zeile[MAX_PUFFER];
-    long aktueller_offset = 0;
-
-    while (1) 
+    if (response_code == 200)
     {
-        aktueller_offset = ftell(fp);
-        if (fgets(csv_zeile, MAX_PUFFER, fp) == NULL) break;
+        char command[MAX_PUFFER];
+        snprintf(command, sizeof(command), "python3 shop-data.py %s", url);
 
-        // Wenn die Zeile mit "sep=" beginnt, überspringen wir sie sofort
-        if (strncmp(csv_zeile, "sep=", 4) == 0) {
-            continue;
-        }
-
-        char zeile_kopie[MAX_PUFFER];
-        strcpy(zeile_kopie, csv_zeile);
-        char *gespeicherte_url = strtok(zeile_kopie, ";");
-
-        if(gespeicherte_url != NULL && strcmp(gespeicherte_url, url) == 0)
-        {
-            *ptr_current_line = aktueller_offset;
-            fclose(fp);
-            return 1;
+        int ret = system(command);
+        if (ret != 0) {
+            fprintf(stderr, "[Fehler] Python-Skript konnte nicht erfolgreich ausgeführt werden! Return-Code: %d ❌\n", ret);
         }
     }
-    fclose(fp);
-    return 0;
 }
 
-// Funktion zu Aktualisieren des Zeitstempels & Statuscode bei bereits vorhandener URL
-void datei_aktualisieren(long *ptr_current_line, char url[MAX_PUFFER], long response_code)
+// Funktion zum Überprüfen von Duplikaten in der Datenbank
+int csv_duplikatpruefung(char url[MAX_PUFFER], sqlite3 *db)
 {
-    FILE *fp = fopen(Ergebnisdatei, "r+");
-    if(fp == NULL)
-    {
-        printf("Fehler beim Oeffnen der Ergebnis Datei\n");
-        return;
+    sqlite3_stmt *stmt;
+    const char *sql = "SELECT 1 FROM fakeshops WHERE URL = ? LIMIT 1;";
+    int existiert = 0;
+
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) == SQLITE_OK) {
+        // Die URL sicher an das '?' binden
+        sqlite3_bind_text(stmt, 1, url, -1, SQLITE_STATIC);
+
+        // Zeile abrufen: Wenn SQLITE_ROW zurückkommt, gibt es den Eintrag
+        if (sqlite3_step(stmt) == SQLITE_ROW) {
+            existiert = 1;
+        }
     }
 
-    fseek(fp, *ptr_current_line, SEEK_SET);
-    fseek(fp, strlen(url) + 1, SEEK_CUR);
+    sqlite3_finalize(stmt);
+    return existiert; // Gibt 1 zurück wenn vorhanden, sonst 0
+}
 
-    char *aktuelle_zeit = zeit_berechnen();
-    aktuelle_zeit[strcspn(aktuelle_zeit, "\n")] = '\0';
+// Funktion zu Aktualisieren des Zeitstempels & Statuscode bei bereits vorhandener URLs
+void datei_aktualisieren(char url[MAX_PUFFER], long response_code, sqlite3 *db, int rc, char *zErrMsg)
+{
+    // FILE *fp = fopen(Ergebnisdatei, "r+");
+    // if(fp == NULL)
+    // {
+    //     printf("Fehler beim Oeffnen der Ergebnis Datei\n");
+    //     return;
+    // }
 
-    fprintf(fp, "%3ld;%s\n", response_code, aktuelle_zeit);
-    fclose(fp);
+    // fseek(fp, *ptr_current_line, SEEK_SET);
+    // fseek(fp, strlen(url) + 1, SEEK_CUR);
+
+    // char *aktuelle_zeit = zeit_berechnen();
+    // aktuelle_zeit[strcspn(aktuelle_zeit, "\n")] = '\0';
+
+    // fprintf(fp, "%3ld;%s\n", response_code, aktuelle_zeit);
+    // fclose(fp);
+
+    char sql_update[512];
+    snprintf(sql_update, sizeof(sql_update), 
+         "UPDATE fakeshops SET status = %ld, date = datetime('now', 'localtime') WHERE url = '%s';", 
+         response_code, url);
+
+    rc = sqlite3_exec(db, sql_update, callback, 0, &zErrMsg);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "SQL-Fehler beim Einfügen: %s\n", zErrMsg);
+        sqlite3_free(zErrMsg);
+    }
+    sqlite3_close(db);
+
+    if (response_code == 200)
+    {
+        char command[MAX_PUFFER];
+        snprintf(command, sizeof(command), "python3 shop-data.py %s", url);
+
+        int ret = system(command);
+        if (ret != 0) {
+            fprintf(stderr, "[Fehler] Python-Skript konnte nicht erfolgreich ausgeführt werden! Return-Code: %d ❌\n", ret);
+        }
+    }
 }
 
 // Funktion zum Schreiben in die csv Datei, wenn keine Verbindung aufgebaut wurde
-void datei_schreiben_netzwerkfehler(char url[MAX_PUFFER], long *ptr_current_line)
+void datei_schreiben_netzwerkfehler(char url[MAX_PUFFER], sqlite3 *db, int rc, char *zErrMsg)
 {
-    if (csv_duplikatpruefung(url, ptr_current_line) == 0)
+    long response_code = 000;
+
+    if (csv_duplikatpruefung(url, db) == 0)
     {
         // Nicht da -> Normal anhängen
-        FILE *fp = fopen(Ergebnisdatei, "a");
-        if (fp == NULL) return;
-        char *zeit = zeit_berechnen();
-        zeit[strcspn(zeit, "\n")] = '\0';
-        fprintf(fp, "%s;---;%s\n", url, zeit);
-        fclose(fp);
+        char sql_insert[512];
+        snprintf(sql_insert, sizeof(sql_insert), 
+             "INSERT INTO fakeshops (url, status) VALUES ('%s', %ld);", 
+             url, response_code);
+
+        rc = sqlite3_exec(db, sql_insert, callback, 0, &zErrMsg);
+        if (rc != SQLITE_OK) {
+            fprintf(stderr, "SQL-Fehler beim Einfügen: %s\n", zErrMsg);
+            sqlite3_free(zErrMsg);
+        }    
     }
-    else
-    {
-        // Bereits da -> Direkt in-place überschreiben
-        FILE *fp = fopen(Ergebnisdatei, "r+");
-        if (fp == NULL) return;
+    else {
+        char sql_update[512];
+        snprintf(sql_update, sizeof(sql_update), 
+         "UPDATE fakeshops SET status = %ld, date = datetime('now', 'localtime') WHERE url = '%s';", 
+         response_code, url);
 
-        fseek(fp, *ptr_current_line, SEEK_SET);
-        fseek(fp, strlen(url) + 1, SEEK_CUR);
-
-        char *aktuelle_zeit = zeit_berechnen();
-        aktuelle_zeit[strcspn(aktuelle_zeit, "\n")] = '\0';
-
-        // Wir schreiben manuell "---" statt der Zahl
-        fprintf(fp, "---;%s\n", aktuelle_zeit);
-        fclose(fp);
+        rc = sqlite3_exec(db, sql_update, callback, 0, &zErrMsg);
+        if (rc != SQLITE_OK) {
+            fprintf(stderr, "SQL-Fehler beim Einfügen: %s ❌\n", zErrMsg);
+            sqlite3_free(zErrMsg);
+        }
     }
+    sqlite3_close(db);
 }
 
 int main(int argc, char *argv[]) {
-    long current_line = 0;
-    long *ptr_current_line = &current_line;
+
+    sqlite3 *db;
+    char *zErrMsg = 0;
+    int rc;
 
     // Beende das Programm, wenn keine URL eingegeben wurde
     if (argc < 2)
     {
-        printf("Fehler, keine URL angeben!\n");
+        printf("Fehler, keine URL angeben! ❌\n");
         return 0;
     }
 
     printf("URL: %s\n", argv[1]);
     
-    datei_initialisieren();
+    // datei_initialisieren();
+    rc = sqlite3_open("data/fakeshops.db", &db);
+
+    char full_path[512];
+    if (realpath("data/fakeshops.db", full_path) != NULL) {
+        printf("[DEBUG] Datenbank wird geöffnet unter: %s ", full_path);
+    }
+
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Kann Datenbank nicht öffnen: %s ❌\n", sqlite3_errmsg(db));
+        return 1;
+    } else {
+        fprintf(stdout, "✅\n");
+    }
+
+    tabelle_erstellen(db, rc, zErrMsg);
 
     CURL *curl = curl_easy_init();
 
@@ -201,8 +298,8 @@ int main(int argc, char *argv[]) {
         CURLcode res = curl_easy_perform(curl);
         if (res != CURLE_OK)
         {
-            printf("Netzwerkfehler: %s\n", curl_easy_strerror(res));
-            datei_schreiben_netzwerkfehler(argv[1], ptr_current_line);
+            printf("Seite nicht erreichbar: %s 💀\n", curl_easy_strerror(res));
+            datei_schreiben_netzwerkfehler(argv[1], db, rc, zErrMsg);
             curl_easy_cleanup(curl);
             return 0;
         }
@@ -213,20 +310,20 @@ int main(int argc, char *argv[]) {
 
             statusmeldung(response_code);
 
-            if (csv_duplikatpruefung(argv[1], ptr_current_line) == 0) // URL noch nicht vorhanden
+            if (csv_duplikatpruefung(argv[1], db) == 0) // URL noch nicht vorhanden
             {
-                datei_schreiben(argv[1], response_code);
+                datei_schreiben(argv[1], response_code, db, rc, zErrMsg);
             }
             else 
             {
-                datei_aktualisieren(ptr_current_line, argv[1], response_code); 
+                datei_aktualisieren(argv[1], response_code, db, rc, zErrMsg); 
             }
         }
         curl_easy_cleanup(curl);
     }
     else
     {
-        printf("Fehler: curl_easy_init() ist fehlgeschlagen (evtl. kein Speicher frei)\n");
+        printf("Fehler: curl_easy_init() ist fehlgeschlagen (evtl. kein Speicher frei) ❌\n");
         return 0;
     }
     return 0;
