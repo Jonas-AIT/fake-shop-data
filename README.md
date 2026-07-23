@@ -13,7 +13,7 @@ genutzt werden können, um Muster in den fakes zu erkennen.
 
 **Automatische URL Suche:** Dieses Feauture ist nach hochfahren der API automatisch aktiviert. Die
                             Watchlist Internet wird nach allen als betrügerische Fakeshops gelisteten
-                            URLs durchsucht und von diesen automatsch Daten extrahiert.
+                            URLs durchsucht und von diesen automatisch Daten extrahiert.
 
 **Manuelle URL Suche:**     Um auch spezielle URLs überprüfen zu können, gibt es auf der API eine 
                             Funktion "manual test". Mit dieser kann eine eingegebene URL direkt
