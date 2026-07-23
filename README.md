@@ -20,7 +20,7 @@ genutzt werden können, um Muster in den fakes zu erkennen.
                             durchsucht werden, ohne das diese auf der Watchlist eingetragen ist.
 
 **Download & results:**     Mit den Funktionen "download data" und "results" kann die gesamte Datenbank
-                            eingesehen oder heruntergeladen werden. Bei Funktionen sind nebeneinander 
+                            eingesehen oder heruntergeladen werden. Beide Funktionen sind nebeneinander 
                             auf der API zu finden.
 
 ## Gebaut mit / Technologien
