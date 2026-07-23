@@ -34,9 +34,11 @@ verwendete Haupttechnologien und Programmiersprachen
 ## Maßgeschneiderte Bibliotheken
 Aufgrund der bsonderen Aufgabe wurden einige spezielle Bibliotheken eingebunden
 
-**Playwright** {Öffnet eigenen Bowser und sieht auch mit JavaScript nachgeladenen Daten.}
-**Googles libphonenumber** {(Python: pyphonenumber) erkennt, strukturiert und prüft Telefonnummern}
-**pypostal** {erkennt, strukturiert und prüft angegebene Adressen in allen Formaten}
+**Playwright:** Öffnet eigenen Bowser und sieht auch mit JavaScript nachgeladenen Daten.
+
+**Googles libphonenumber:** (Python: pyphonenumber) erkennt, strukturiert und prüft Telefonnummern
+
+**pypostal:** erkennt, strukturiert und prüft angegebene Adressen in allen Formaten
 
 ## Installation
 
