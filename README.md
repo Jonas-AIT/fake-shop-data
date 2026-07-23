@@ -32,13 +32,25 @@ verwendete Haupttechnologien und Programmiersprachen
 - Packaging (DOCKER)
 
 ## Maßgeschneiderte Bibliotheken
-Aufgrund der bsonderen Aufgabe wurden einige spezielle Bibliotheken eingebunden
+Aufgrund der speziellen Aufgabe wurden einige Bibliotheken mit maßgeschneiderten Funktionen eingebunden
 
 **Playwright:** Öffnet eigenen Bowser und sieht auch mit JavaScript nachgeladenen Daten.
 
 **Googles libphonenumber:** (Python: pyphonenumber) erkennt, strukturiert und prüft Telefonnummern
 
 **pypostal:** erkennt, strukturiert und prüft angegebene Adressen in allen Formaten
+
+## Konfiguration
+in der.env Datei können Werte festgelegt werden, um die Geschwindigkeit und Lage des Programms 
+zu kontrollieren. 
+
+**PORT:** Legt fest, an welchem PORT die Haupt API (api_wrapper.py) laufen soll
+
+**SCHDULE_INTERVALL_MINUTES:** Legt fest, wie viel Zeit zwischen den automatischen Test sein soll
+
+**SITES_TO_CHECK:** Legt fest, wie viele Seiten pro automatischem Durchlauf kontrolliert werden sollen.
+
+Um überlappende Testanfragen zu vermeiden bitte mindestens 5 Sekunden pro Seite einplanen.
 
 ## Installation
 
