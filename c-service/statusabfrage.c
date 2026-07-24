@@ -98,43 +98,9 @@ char* zeit_berechnen()
     return ptr_timestring;
 }
 
-// // Funktion stellt sicher, dass die Datei existiert und ggf. "sep=;" enthält
-// void datei_initialisieren()
-// {
-//     FILE *fp = fopen(Ergebnisdatei, "r");
-//     if (fp == NULL) 
-//     {
-//         // Datei existiert nicht -> Neu erstellen mit Kopfzeile
-//         printf("Ergebnisdatei existiert nicht. Erstelle mit Header...\n");
-//         FILE *new_fp = fopen(Ergebnisdatei, "w");
-//         if (new_fp != NULL) 
-//         {
-//             fprintf(new_fp, "sep=;\n");
-//             fclose(new_fp);
-//         }
-//     }
-//     else 
-//     {
-//         fclose(fp);
-//     }
-// }
-
 // Funktion zum Beschreiben der CSV Datei mit den Ergebnisen
 void datei_schreiben(char url[MAX_PUFFER], long response_code, sqlite3 *db, int rc, char *zErrMsg)
 {
-    // FILE *fp = fopen(Ergebnisdatei, "a");
-    // if(fp == NULL) 
-    // {
-    //     printf("Fehler beim Oeffnen der Ergebnis Datei");
-    //     return;
-    // }
-
-    // char *zeit = zeit_berechnen();
-    // zeit[strcspn(zeit, "\n")] = '\0';
-
-    // fprintf(fp, "%s;%ld;%s\n", url, response_code, zeit);
-    // fclose(fp);
-
     char sql_insert[512];
     snprintf(sql_insert, sizeof(sql_insert), 
          "INSERT INTO fakeshops (url, status) VALUES ('%s', %ld);", 
@@ -183,22 +149,6 @@ int csv_duplikatpruefung(char url[MAX_PUFFER], sqlite3 *db)
 // Funktion zu Aktualisieren des Zeitstempels & Statuscode bei bereits vorhandener URLs
 void datei_aktualisieren(char url[MAX_PUFFER], long response_code, sqlite3 *db, int rc, char *zErrMsg)
 {
-    // FILE *fp = fopen(Ergebnisdatei, "r+");
-    // if(fp == NULL)
-    // {
-    //     printf("Fehler beim Oeffnen der Ergebnis Datei\n");
-    //     return;
-    // }
-
-    // fseek(fp, *ptr_current_line, SEEK_SET);
-    // fseek(fp, strlen(url) + 1, SEEK_CUR);
-
-    // char *aktuelle_zeit = zeit_berechnen();
-    // aktuelle_zeit[strcspn(aktuelle_zeit, "\n")] = '\0';
-
-    // fprintf(fp, "%3ld;%s\n", response_code, aktuelle_zeit);
-    // fclose(fp);
-
     char sql_update[512];
     snprintf(sql_update, sizeof(sql_update), 
          "UPDATE fakeshops SET status = %ld, date = datetime('now', 'localtime') WHERE url = '%s';", 
