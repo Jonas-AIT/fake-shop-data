@@ -1,31 +1,174 @@
 <!DOCTYPE html>
-
-<html lang = "de">
+<html lang="de">
     <head>
-        <title>Python API</title>
+        <title>Python API - Testergebnis</title>
         <link rel="stylesheet" href="{{ url_for('static', filename='style_test.css') }}">
     </head>
 
     <body>
-        <div class = "top-bar">
+        <div class="top-bar">
             <br>
             <h1>AIT</h1>
         </div>
 
-        <div class = "content">
+        <div class="content">
             <h1>API für Statusabfragen von Fake Shops</h1>
 
-            <p>
-                Der Websitetest wurde erfolgreich gestartet. Um die vollständige
-                Abarbeitung garantieren zu können, starten Sie bitte für mindestens
-                {{test_ammount}} Sekunden keinen neuen Test.
-            </p>
+            {% if shop %}
+                <p class="success-message">
+                    Der Websitetest wurde erfolgreich abgeschlossen! Folgende Daten wurden in der Datenbank erfasst:
+                </p>
+
+                <table class="result-table">
+                    <tr>
+                        <th>URL</th>
+                        <td><a href="{{ shop.URL }}" target="_blank">{{ shop.URL }}</a></td>
+                    </tr>
+
+                    {% if shop.title %}
+                    <tr>
+                        <th>Titel / Name</th>
+                        <td>{{ shop.title }}</td>
+                    </tr>
+                    {% endif %}
+
+                    {% if shop.status %}
+                    <tr>
+                        <th>Status Code</th>
+                        <td>
+                            {% if shop.status == 200 %}
+                                <span class="status-badge online">200 (Online)</span>
+                            {% else %}
+                                <span class="status-badge offline">{{ shop.status }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endif %}
+
+                    {% if shop.language %}
+                    <tr>
+                        <th>Sprache</th>
+                        <td>{{ shop.language }}</td>
+                    </tr>
+                    {% endif %}
+
+                    {% if shop.company_name or shop.USt_IdNr %}
+                    <tr>
+                        <th>Firma</th>
+                        <td>{{ shop.company_name or 'N/A' }}</td>
+                    </tr>
+                    {% endif %}
+
+                    {% if shop.email1 or shop.email2 %}
+                    <tr>
+                        <th>E-Mail</th>
+                        <td>
+                            {{ shop.email1 }}
+                            {% if shop.email1 and shop.email2 %} / {% endif %}
+                            {{ shop.email2 }}
+                        </td>
+                    </tr>
+                    {% endif %}
+
+                    {% if shop.phonenumber %}
+                    <tr>
+                        <th>Telefon</th>
+                        <td>
+                            {{ shop.phonenumber }}
+                            {% if shop.phonenumber_carrier or shop.phonenumber_location %}
+                                (
+                                {%- if shop.phonenumber_carrier %}{{ shop.phonenumber_carrier }}{% endif -%}
+                                {%- if shop.phonenumber_carrier and shop.phonenumber_location %}, {% endif -%}
+                                {%- if shop.phonenumber_location %}{{ shop.phonenumber_location }}{% endif -%}
+                                )
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endif %}
+
+                    {% if shop.address %}
+                    <tr>
+                        <th>Adresse</th>
+                        <td>{{ shop.address }}</td>
+                    </tr>
+                    {% endif %}
+
+                    {% if shop.company_address or shop.USt_IdNr %}
+                    <tr>
+                        <th>Firmenadresse</th>
+                        <td>{{ shop.company_address or 'N/A' }}</td>
+                    </tr>
+                    {% endif %}
+
+                    {% if shop.registered_country %}
+                    <tr>
+                        <th>Registrierungsland</th>
+                        <td>{{ shop.registered_country }}</td>
+                    </tr>
+                    {% endif %}
+
+                    {% if shop.USt_IdNr %}
+                    <tr>
+                        <th>USt-IdNr.</th>
+                        <td>
+                            {{ shop.USt_IdNr }}
+                            {% if shop.is_valid is not none %}
+                                {% if shop.is_valid == 1 or shop.is_valid == True %}
+                                    <span class="valid-tag">(Gültig)</span>
+                                {% else %}
+                                    <span class="invalid-tag">(Ungültig)</span>
+                                {% endif %}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endif %}
+
+                    {% if shop.servername %}
+                    <tr>
+                        <th>Server / NS</th>
+                        <td>{{ shop.servername }}</td>
+                    </tr>
+                    {% endif %}
+
+                    {% if shop.domain_status %}
+                    <tr>
+                        <th>Domain Status</th>
+                        <td>{{ shop.domain_status }}</td>
+                    </tr>
+                    {% endif %}
+
+                    {% if shop.url_creation_date or shop.url_expiration_date or shop.url_last_update %}
+                    <tr>
+                        <th>Domain registriert am</th>
+                        <td>{{ shop.url_creation_date or 'N/A' }}</td>
+                    </tr>
+                    <tr>
+                        <th>Domain läuft ab am</th>
+                        <td>{{ shop.url_expiration_date or 'N/A' }}</td>
+                    </tr>
+                    <tr>
+                        <th>Letztes Domain-Update</th>
+                        <td>{{ shop.url_last_update or 'N/A' }}</td>
+                    </tr>
+                    {% endif %}
+
+                    {% if shop.date %}
+                    <tr>
+                        <th>Geprüft am</th>
+                        <td>{{ shop.date }}</td>
+                    </tr>
+                    {% endif %}
+                </table>
+            {% else %}
+                <div class="error-box">
+                    <p>⚠️ Es konnte kein aktueller Test durchgeführt werden oder für diese URL wurden keine Daten in der Datenbank gefunden.</p>
+                </div>
+            {% endif %}
+
             <br>
-        
-            <nav class = "nav-links">
-                <a href="{{ url_for('download_results') }}" class="nav-button">download csv</a>
+
+            <nav class="nav-links">
                 <a href="{{ url_for('home') }}" class="nav-button">Home</a>
-                <a href="{{ url_for('show_results') }}" class="nav-button">results</a>
             </nav>
         </div>    
     </body>

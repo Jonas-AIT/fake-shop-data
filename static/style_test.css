@@ -1,7 +1,9 @@
+/* --- Bestehendes Basis-Design --- */
 body {
     margin: 0;
     padding: 0;
     font-family: Arial, sans-serif;
+    background-color: #fcfcfc;
 }
 
 .top-bar {
@@ -9,11 +11,17 @@ body {
     color: white;
     height: 80px;
     display: flex;
-    padding-left: 40px
+    padding-left: 40px;
+    align-items: center;
 }
 
 .content {
     padding: 20px;
+    max-width: 900px;
+}
+
+.nav-links {
+    margin-top: 25px;
 }
 
 .nav-button {
@@ -23,9 +31,95 @@ body {
     padding: 8px 16px;
     border-radius: 4px;
     margin-right: 10px;
-    transition: backgrounf 0.2s;
+    display: inline-block;
+    transition: background-color 0.2s;
 }
 
 .nav-button:hover {
     background-color: #007bff;
+}
+
+/* --- Neu: Ergebnistabelle für die Datenbank-Daten --- */
+.result-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border-radius: 6px;
+    overflow: hidden;
+    background-color: #ffffff;
+}
+
+.result-table th, 
+.result-table td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid #eeeeee;
+    font-size: 14px;
+    word-break: break-word;
+}
+
+.result-table th {
+    background-color: #6d6b6b;
+    color: white;
+    width: 25%;
+    font-weight: 600;
+}
+
+.result-table tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+.result-table tr:hover {
+    background-color: #f1f1f1;
+}
+
+.result-table a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.result-table a:hover {
+    text-decoration: underline;
+}
+
+/* --- Neu: Status Badges (Online / Offline) --- */
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 13px;
+    display: inline-block;
+}
+
+.status-badge.online {
+    background-color: #28a745;
+    color: white;
+}
+
+.status-badge.offline {
+    background-color: #dc3545;
+    color: white;
+}
+
+/* --- Neu: Fehlerbox (falls URL nicht in DB gefunden) --- */
+.error-box {
+    padding: 15px;
+    background-color: #f8d7da;
+    color: #721c24;
+    border-left: 5px solid #f5c6cb;
+    border-radius: 4px;
+    margin-top: 20px;
+}
+
+.valid-tag {
+    color: #28a745;
+    font-weight: bold;
+    margin-left: 5px;
+}
+
+.invalid-tag {
+    color: #dc3545;
+    font-weight: bold;
+    margin-left: 5px;
 }

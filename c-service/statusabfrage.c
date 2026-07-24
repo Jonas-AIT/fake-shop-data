@@ -30,6 +30,7 @@ void tabelle_erstellen(sqlite3 *db, int rc, char *zErrMsg)
                             "URL TEXT," \
                             "status INTEGER," \
                             "title TEXT," \
+                            "language TEXT," \
                             "email1 TEXT," \
                             "email2 TEXT," \
                             "phonenumber TEXT," \

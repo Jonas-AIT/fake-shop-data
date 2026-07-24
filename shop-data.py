@@ -26,6 +26,7 @@ import whois
 from urllib.parse import urlparse
 import socket
 import sys
+from langdetect import DetectorFactory, detect
 
 load_dotenv()
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -132,16 +133,27 @@ with sqlite3.connect(db_path, detect_types = sqlite3.PARSE_DECLTYPES) as connect
 
     url = finde_impressum(start_url)
 
-    # cursor.execute("""
-    #                INSERT INTO fakeshops(url)
-    #                VALUES (?)
-    # """, (start_url,))
-
     try:
         response = requests.get(start_url, headers=headers, timeout=10)
         soup = BeautifulSoup(response.text, "html.parser")
         page = soup.get_text()
 
+        # Websitesprache ausgeben
+        DetectorFactory.seed = 0
+
+        for script in soup(["script", "style"]):
+            script.decompose()
+        text = soup.get_text(separator = " ", strip = True) 
+
+        if text:
+            detected_lang = detect(text)
+            cursor.execute("""
+                           UPDATE fakeshops
+                           SET language = ?,
+                           date = datetime('now', 'localtime')
+                           WHERE URL = ?
+            """, (detected_lang, start_url,))
+        
         # Websitetitel ausgeben
         if soup.title and soup.title.string:
             whole_title = soup.title.string

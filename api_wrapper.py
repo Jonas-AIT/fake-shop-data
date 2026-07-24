@@ -10,26 +10,61 @@ import schedule
 import time
 import threading
 import requests
+import sqlite3
 
 load_dotenv()
 
-FILE_NAME = "data/statusvalues.csv"
+FILE_NAME = "data/fakeshops.db"
 SCHEDULE_MINUTES = int(os.getenv("SCHEDULE_INTERVAL_MINUTES", 10)) # Fallback-Wert = 10
 PORT = int(os.getenv("PORT", 8000))
 NUMBER_OF_SITES = int(os.getenv("SITES_TO_CHECK", 40))
 C_SERVICE_URL = os.getenv("C_SERVICE_URL", "http://c-service:8000")  
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, "data", "fakeshops.db")
+
+def get_shop_by_url(url):
+    # Verwende den absoluten Pfad zur DB
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT * FROM fakeshops WHERE URL = ? ORDER BY ID DESC LIMIT 1", (url,)
+    )
+    shop_data = cursor.fetchone()
+    conn.close()
+    return shop_data
+
 app = Flask(__name__)
 
+@app.route("/manual_test", methods=["POST"])
+def manual_test():
+    input_url = request.form.get("shop_url")
+    shop_info = None
+
+    if input_url:
+        try:       
+            resp = requests.post(f"{C_SERVICE_URL}/manual_test/{input_url}", timeout = 40)
+            if resp.status_code == 409:
+                print("[Hinweis] Es laeuft bereits eine Pruefung, neuer Trigger wurde abgelehnt ⚠️", flush = True)
+            elif resp.status_code == 200:
+                shop_info = get_shop_by_url(input_url)
+
+        except requests.exceptions.RequestException as e:
+            print(f"[Fehler] C-Service nicht erreichbar: {e}", flush = True)
+    return render_template('test.html', shop=shop_info)    
+        
+
 @app.route("/test/<number_of_sites>")
-def run_watchlist(number_of_sites):
+def check_watchlist(number_of_sites):
     try:
         resp = requests.post(f"{C_SERVICE_URL}/test/{number_of_sites}", timeout = 40)
         if resp.status_code == 409:
             print("[Hinweis] Es laeuft bereits eine Pruefung, neuer Trigger wurde abgelehnt", flush = True)
     except requests.exceptions.RequestException as e:
         print(f"[Fehler] C-Service nicht erreichbar: {e}", flush = True)
-    return render_template('test.html')    
+    return render_template('index.html')    
 
 def trigger_watchlist_check(number_of_sites):
     """Startet die Watchlist-Prüfung, nur für die Automatik"""
@@ -57,54 +92,12 @@ def forward_test():
     chosen_id = requests.form.get('ammount_tests')
     return redirect(url_for('run_watchlist', number_of_sites = chosen_id))
 
-@app.route("/results")
-def show_results():
-    if not os.path.exists(FILE_NAME):
-        return "<pre>Es liegen noch keine Testergebnisse vor.</pre>"
-
-    with open(FILE_NAME, 'r') as file:
-        zeilen = file.readlines()
-
-    # "sep=;"-Zeile überspringen
-    zeilen = [z for z in zeilen if not z.startswith("sep=")]
-
-    rows_html = ""
-    for zeile in zeilen:
-        teile = zeile.strip().split(";")
-        if len(teile) != 3:
-            continue
-        url, status, zeit = teile
-
-        # Farbe je nach Status bestimmen
-        if status == "200":
-            farbe = "green"
-        elif status == "---":
-            farbe = "gray"
-        else:
-            farbe = "red"
-
-        rows_html += f"""
-        <tr>
-            <td>{url}</td>
-            <td style="color:{farbe}; font-weight:bold;">{status}</td>
-            <td>{zeit}</td>
-        </tr>
-        """
-
-    html = f"""
-    <table border="1" cellpadding="8" style="border-collapse: collapse;">
-        <tr><th>URL</th><th>Status</th><th>Zeitpunkt</th></tr>
-        {rows_html}
-    </table>
-    """
-    return html
-
 @app.route("/results/download")
 def download_results():
     if os.path.exists(FILE_NAME):
         return send_file(
             FILE_NAME,
-            mimetype = 'text/csv',
+            mimetype = 'application/x-sqlite3',
             as_attachment = True,
             download_name = FILE_NAME
         )

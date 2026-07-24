@@ -28,6 +28,8 @@ RUN git clone https://github.com/openvenues/libpostal /tmp/libpostal \
     && ldconfig \
     && rm -rf /tmp/libpostal
 
+RUN mkdir -p /app/data && chmod -R 777 /app/data
+
 ENV TZ=Europe/Vienna   
 
 WORKDIR /app

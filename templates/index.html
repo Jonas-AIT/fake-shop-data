@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 
-<html lang = "de">
+<html lang="de">
     <head>
         <title>Statuschecks</title>
         <link rel="stylesheet" href="{{ url_for('static', filename='style_index.css') }}">
@@ -9,19 +9,26 @@
 
     <body>
 
-        <div class = "top-bar">
+        <div class="top-bar">
             <br>
             <h1>AIT</h1>
         </div>
 
-        <div class = "content">
-                <div class="header-row">
-                    <h2>API für Statusabfragen von Fake Shops</h2>
+        <div class="content">
+            <div class="header-row">
+                <h2>API für Statusabfragen von Fake Shops</h2>
+
+                <div class="header-actions">
+                    <form action="{{ url_for('manual_test') }}" method="POST" class="test-form">
+                        <input type="url" name="shop_url" placeholder="https://example.com" required class="url-input">
+                        <button type="submit" class="nav-button test-button">Test</button>
+                    </form>
+
                     <nav class="nav-links">
                         <a href="{{ url_for('download_results') }}" class="nav-button">download data</a>
-                        <a href="{{ url_for('show_results') }}" class="nav-button">results</a>
                     </nav>
                 </div>
+            </div>
 
             <p>
                 Das Programm dient dazu, die Fake Shops, die auf der Watchlist 
@@ -32,14 +39,17 @@
             </p>
 
             <p>
-                Der Bereich "result" muss erst noch gebaut werden.
+                Wenn Sie eine spezielle URL prüfen wollen, geben Sie diese in das Eingabefeld
+                neben ein. Sie werden anschließend auf eine Seite mit den 
+                Ergebnissen weitergeleitet. Da der Test Zeit in Anspruch nehmen kann,
+                haben Sie bitte Geduld.
             </p>  
             <br>
 
-            <img src="{{ url_for('static', filename='API-Bild.jpg') }}" alt="Super Bild" style = "border-radius: 12px; width: 100%;">
+            <img src="{{ url_for('static', filename='API-Bild.jpg') }}" alt="Super Bild" style="border-radius: 12px; width: 100%;">
         </div>
 
-        <div class = "bottom-bar">
+        <div class="bottom-bar">
             <p>Made by Jonas Sheikh: jonas.sheikh@ait.ac.at</p>
         </div>
     </body>

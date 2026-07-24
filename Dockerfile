@@ -30,6 +30,8 @@ RUN git clone https://github.com/openvenues/libpostal \
     && ldconfig \
     && cd .. \
     && rm -rf libpostal
+
+RUN mkdir -p /app/data && chmod -R 777 /app/data    
         
 ENV TZ = Europe/Vienna    
 
@@ -73,9 +75,7 @@ RUN mkdir -p data \
 # Expose the port that the application listens on.
 EXPOSE 8000
 
-USER appuser
-
 ENV TMPDIR=/app
 
 # Run the application.
-CMD gunicorn -w 1 --timeout 0 -b 0.0.0.0:${PORT:-8000} api_wrapper:app
+CMD gunicorn -w 13 --timeout 0 -b 0.0.0.0:${PORT:-8000} api_wrapper:app

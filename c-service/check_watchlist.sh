@@ -10,7 +10,7 @@
 #   ./check_watchlist.sh 100    -> prueft 100 Domains
 set -uo pipefail
 
-# Keine Core-Dumps erzeugen (verhindert core-Dateien im Arbeitsverzeichnis
+# Keine Core-Dumps erzeugen (verhindert core-Dateien im Arbeitsverzeichnis 
 # bei jedem Absturz von statusabfrage)
 ulimit -c 0
 
